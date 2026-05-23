@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA — AI Marketing Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020408;
+  --deep: #050c14;
+  --surface: #080f1a;
+  --surface2: #0c1525;
+  --surface3: #111e30;
+  --surface4: #162236;
+  --border: rgba(0,210,255,0.08);
+  --border2: rgba(0,210,255,0.18);
+  --border3: rgba(0,210,255,0.35);
+  --text: #e8f4ff;
+  --text2: #7ba8c8;
+  --text3: #3a5a72;
+  --cyan: #00d2ff;
+  --cyan2: #00a8d4;
+  --cyan-dim: rgba(0,210,255,0.06);
+  --cyan-glow: rgba(0,210,255,0.25);
+  --gold: #ffd700;
+  --gold-dim: rgba(255,215,0,0.08);
+  --red: #ff4060;
+  --green: #00ff88;
+  --mono: 'Space Mono', monospace;
+  --display: 'Orbitron', sans-serif;
+  --body: 'Rajdhani', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--body);
+  background: var(--void);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+/* SCANLINES */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanlines 8s linear infinite;
+}
+
+@keyframes scanlines {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+/* VIGNETTE */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(2,4,8,0.8) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ANIMATED GRID */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.grid-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image:
+    linear-gradient(rgba(0,210,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,210,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridMove 20s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes gridMove {
+  0% { transform: perspective(500px) rotateX(20deg) translateY(0); }
+  100% { transform: perspective(500px) rotateX(20deg) translateY(60px); }
+}
+
+/* GLOW ORBS */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,210,255,0.08) 0%, transparent 70%);
+  top: -150px; left: -100px;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 70%);
+  bottom: -100px; right: -100px;
+  animation: orbFloat 15s ease-in-out infinite reverse;
+}
+
+.orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(0,255,136,0.04) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: orbPulse 8s ease-in-out infinite;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(30px, -20px); }
+  66% { transform: translate(-20px, 30px); }
+}
+
+@keyframes orbPulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* MAIN LAYOUT */
+.shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* ===== BOOT SCREEN ===== */
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: var(--void);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: bootFade 0.5s ease 2.8s forwards;
+}
+
+@keyframes bootFade {
+  to { opacity: 0; pointer-events: none; }
+}
+
+.boot-logo {
+  font-family: var(--display);
+  font-size: clamp(60px, 12vw, 100px);
+  font-weight: 900;
+  color: #00e8ff;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 40px var(--cyan-glow), 0 0 80px rgba(0,210,255,0.15);
+  animation: bootGlitch 0.3s steps(1) 0.5s, bootGlitch2 0.2s steps(1) 1.2s;
+}
+
+@keyframes bootGlitch {
+  0% { clip-path: inset(20% 0 40% 0); transform: translateX(-4px); color: var(--red); }
+  50% { clip-path: inset(60% 0 10% 0); transform: translateX(4px); color: var(--green); }
+  100% { clip-path: none; transform: none; color: #00e8ff; }
+}
+
+@keyframes bootGlitch2 {
+  0% { clip-path: inset(5% 0 80% 0); transform: translateX(6px) skewX(3deg); }
+  100% { clip-path: none; transform: none; }
+}
+
+.boot-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #5a7a94;
+  letter-spacing: 0.2em;
+  animation: typing 1s steps(30) 0.8s both;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 0;
+}
+
+@keyframes typing {
+  to { width: 320px; }
+}
+
+.boot-bar-wrap {
+  width: 300px;
+  height: 2px;
+  background: var(--surface3);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.boot-bar {
+  height: 100%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  animation: bootLoad 2s ease 0.6s both;
+}
+
+@keyframes bootLoad {
+  0% { width: 0%; }
+  30% { width: 40%; }
+  60% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* ===== HEADER ===== */
+.header {
+  padding: 48px 0 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 24px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 3.2s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header-title-wrap { position: relative; }
+
+.header-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #00e8ff;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--cyan);
+}
+
+.header-title {
+  font-family: var(--display);
+  font-size: clamp(52px, 10vw, 88px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  position: relative;
+}
+
+.header-title .glow-letter {
+  color: #00e8ff;
+  text-shadow: 0 0 30px var(--cyan-glow), 0 0 60px rgba(0,210,255,0.1);
+  display: inline-block;
+  animation: letterPulse 4s ease-in-out infinite;
+}
+
+@keyframes letterPulse {
+  0%, 100% { text-shadow: 0 0 30px var(--cyan-glow), 0 0 60px rgba(0,210,255,0.1); }
+  50% { text-shadow: 0 0 50px var(--cyan-glow), 0 0 100px rgba(0,210,255,0.2); }
+}
+
+.header-title .scanline-text {
+  position: relative;
+  display: inline-block;
+}
+
+.header-sub {
+  font-family: var(--body);
+  font-size: 16px;
+  font-weight: 300;
+  color: #a8c4e0;
+  letter-spacing: 0.12em;
+  margin-top: 16px;
+  text-transform: uppercase;
+}
+
+.header-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #a8c4e0;
+  letter-spacing: 0.08em;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-chip::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--cyan);
+}
+
+.stat-chip .chip-val { color: #00e8ff; font-weight: 700; }
+
+.pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: dotPulse 2s infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+  50% { opacity: 0.4; box-shadow: 0 0 12px var(--green); }
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 3.4s forwards;
+}
+
+.div-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+}
+
+.div-text {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a7a94;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ===== MODULE SELECTOR ===== */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  margin-bottom: 32px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 3px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 3.5s forwards;
+}
+
+.mod-btn {
+  padding: 14px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: crosshair;
+  transition: all 0.25s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mod-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,210,255,0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.mod-btn:hover::before { opacity: 1; }
+.mod-btn:hover { border-color: var(--border2); }
+
+.mod-btn.active {
+  background: var(--surface3);
+  box-shadow: inset 0 0 20px rgba(0,210,255,0.05);
+}
+
+.mod-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  border-radius: 99px;
+}
+
+.mod-num {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a7a94;
+  letter-spacing: 0.15em;
+  margin-bottom: 5px;
+}
+
+.mod-btn.active .mod-num { color: #00e8ff; }
+
+.mod-label {
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #a8c4e0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.mod-btn.active .mod-label { color: var(--text); }
+
+/* ===== INPUT PANEL ===== */
+.input-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 3.6s forwards;
+}
+
+.input-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.4;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+}
+
+.panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #5a7a94;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.panel-header-left .corner {
+  width: 8px; height: 8px;
+  border-top: 1px solid var(--cyan);
+  border-left: 1px solid var(--cyan);
+}
+
+.module-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #00e8ff;
+  background: var(--cyan-dim);
+  border: 1px solid var(--border3);
+  padding: 3px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.panel-body { padding: 24px; }
+
+.fields-standard, .fields-intelligence { display: none; }
+.fields-standard.active, .fields-intelligence.active { display: block; }
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.field-full { grid-column: 1 / -1; }
+
+.field-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a7a94;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+input, textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: var(--body);
+  font-size: 14px;
+  color: #f0f4ff;
+  outline: none;
+  transition: all 0.2s;
+  letter-spacing: 0.03em;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--border3);
+  background: var(--surface3);
+  box-shadow: 0 0 20px rgba(0,210,255,0.05), inset 0 0 20px rgba(0,210,255,0.02);
+}
+
+input::placeholder, textarea::placeholder { color: #5a7a94; }
+
+textarea {
+  min-height: 100px;
+  resize: none;
+  line-height: 1.7;
+}
+
+/* ===== EXECUTE BUTTON ===== */
+.execute-wrap {
+  position: relative;
+  margin-top: 4px;
+}
+
+.execute-btn {
+  width: 100%;
+  padding: 16px 24px;
+  background: transparent;
+  border: 1px solid var(--border3);
+  border-radius: 6px;
+  cursor: crosshair;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: #00e8ff;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.execute-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,210,255,0.08) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.execute-btn:hover::before { transform: translateX(100%); }
+
+.execute-btn:hover {
+  background: rgba(0,210,255,0.06);
+  box-shadow: 0 0 30px rgba(0,210,255,0.1), inset 0 0 30px rgba(0,210,255,0.03);
+  color: #fff;
+}
+
+.execute-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.execute-btn .btn-corners::before,
+.execute-btn .btn-corners::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  border-color: #00e8ff;
+  border-style: solid;
+  transition: all 0.3s;
+}
+
+.execute-btn .btn-corners::before {
+  top: 4px; left: 4px;
+  border-width: 1px 0 0 1px;
+}
+
+.execute-btn .btn-corners::after {
+  bottom: 4px; right: 4px;
+  border-width: 0 1px 1px 0;
+}
+
+.execute-btn:hover .btn-corners::before {
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+}
+
+.execute-btn:hover .btn-corners::after {
+  bottom: 2px; right: 2px;
+  width: 12px; height: 12px;
+}
+
+/* ===== LOADING ===== */
+.loading-panel {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-panel.show { display: block; animation: fadeUp 0.3s ease; }
+
+.loading-ring {
+  width: 60px; height: 60px;
+  border: 1px solid var(--border);
+  border-top-color: #00e8ff;
+  border-right-color: #00e8ff;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+  position: relative;
+}
+
+.loading-ring::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid transparent;
+  border-bottom-color: rgba(0,210,255,0.3);
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite reverse;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-title {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #00e8ff;
+  letter-spacing: 0.2em;
+  margin-bottom: 8px;
+}
+
+.loading-msg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #5a7a94;
+  letter-spacing: 0.08em;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.loading-progress {
+  margin-top: 20px;
+  height: 1px;
+  background: var(--surface3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.loading-fill {
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: scanProgress 2s ease-in-out infinite;
+  width: 40%;
+}
+
+@keyframes scanProgress {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(400%); }
+}
+
+/* ===== ERROR ===== */
+.error-panel {
+  display: none;
+  background: rgba(255,64,96,0.05);
+  border: 1px solid rgba(255,64,96,0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #ff8080;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.error-panel.show { display: block; animation: fadeUp 0.3s ease; }
+
+/* ===== OUTPUT PANEL ===== */
+.output-panel {
+  display: none;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.output-panel.show { display: block; }
+
+.output-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+.output-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.3;
+}
+
+.output-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.output-icon {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border3);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cyan-dim);
+}
+
+.output-icon-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: dotPulse 2s infinite;
+}
+
+.output-label {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  color: #00e8ff;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.output-actions { display: flex; gap: 8px; }
+
+.out-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #a8c4e0;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: crosshair;
+  transition: all 0.2s;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.out-btn:hover { color: #00e8ff; border-color: var(--border3); }
+
+.output-body {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: none;
+  border-bottom: none;
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.output-body::-webkit-scrollbar { width: 3px; }
+.output-body::-webkit-scrollbar-track { background: transparent; }
+.output-body::-webkit-scrollbar-thumb { background: var(--border3); border-radius: 99px; }
+
+/* OUTPUT SECTIONS */
+.out-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: background 0.2s;
+  animation: sectionReveal 0.4s ease both;
+}
+
+@keyframes sectionReveal {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.out-section:last-child { border-bottom: none; }
+.out-section:hover { background: var(--surface2); }
+
+.out-section::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--cyan), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.out-section:hover::before { opacity: 1; }
+
+.section-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #00e8ff;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-tag::before {
+  content: '>';
+  color: #5a7a94;
+}
+
+.section-content {
+  font-family: var(--body);
+  font-size: 15px;
+  font-weight: 400;
+  color: #eef4ff;
+  line-height: 1.75;
+}
+
+.section-content strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* RAW FALLBACK */
+.raw-out {
+  padding: 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #e8f2ff;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+  letter-spacing: 0.02em;
+}
+
+.output-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #5a7a94;
+  letter-spacing: 0.08em;
+}
+
+.footer-stat { color: #a8c4e0; }
+.footer-stat span { color: #00e8ff; }
+
+/* ===== CORNER DECORATIONS ===== */
+.corner-deco {
+  position: fixed;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.corner-tl {
+  top: 20px; left: 20px;
+  width: 40px; height: 40px;
+  border-top: 1px solid var(--border3);
+  border-left: 1px solid var(--border3);
+}
+
+.corner-tr {
+  top: 20px; right: 20px;
+  width: 40px; height: 40px;
+  border-top: 1px solid var(--border3);
+  border-right: 1px solid var(--border3);
+}
+
+.corner-bl {
+  bottom: 20px; left: 20px;
+  width: 40px; height: 40px;
+  border-bottom: 1px solid var(--border3);
+  border-left: 1px solid var(--border3);
+}
+
+.corner-br {
+  bottom: 20px; right: 20px;
+  width: 40px; height: 40px;
+  border-bottom: 1px solid var(--border3);
+  border-right: 1px solid var(--border3);
+}
+
+/* TICKER */
+.ticker {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  background: var(--surface2);
+  border-top: 1px solid var(--border2);
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.ticker-inner {
+  display: flex;
+  gap: 60px;
+  animation: tickerMove 30s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes tickerMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a7a94;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticker-item span { color: #00e8ff; }
+.ticker-sep { color: var(--border3); }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .module-grid { grid-template-columns: repeat(2, 1fr); }
+  .field-grid { grid-template-columns: 1fr; }
+  .field-full { grid-column: 1; }
+  .header { grid-template-columns: 1fr; }
+  .header-stats { flex-direction: row; flex-wrap: wrap; }
+  .corner-deco { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+  <div class="boot-logo">ARIA</div>
+  <div class="boot-text">INITIALIZING MARKETING INTELLIGENCE SYSTEM...</div>
+  <div class="boot-bar-wrap"><div class="boot-bar"></div></div>
+</div>
+
+<!-- CORNER DECORATIONS -->
+<div class="corner-deco corner-tl"></div>
+<div class="corner-deco corner-tr"></div>
+<div class="corner-deco corner-bl"></div>
+<div class="corner-deco corner-br"></div>
+
+<!-- BACKGROUND -->
+<div class="grid-bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-title-wrap">
+      <div class="header-eyebrow">System Online · v2.1.0</div>
+      <div class="header-title">
+        <span class="scanline-text">A</span><span class="glow-letter">R</span><span class="scanline-text">IA</span>
+      </div>
+      <div class="header-sub">Autonomous Research & Intelligence Agent</div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-chip"><div class="pulse-dot"></div><span>Status</span> <span class="chip-val">ONLINE</span></div>
+      <div class="stat-chip">Engine <span class="chip-val">Llama 3.3 70B</span></div>
+      <div class="stat-chip">Mode <span class="chip-val">GROQ CLOUD</span></div>
+      <div class="stat-chip">Cost <span class="chip-val">₹0.00</span></div>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="div-line"></div>
+    <div class="div-text">Select Module & Execute</div>
+    <div class="div-line"></div>
+  </div>
+
+  <!-- MODULE SELECTOR -->
+  <div class="module-grid">
+    <button class="mod-btn active" onclick="selectModule('seo', this)">
+      <div class="mod-num">01</div>
+      <div class="mod-label">SEO Brief</div>
+    </button>
+    <button class="mod-btn" onclick="selectModule('ads', this)">
+      <div class="mod-num">02</div>
+      <div class="mod-label">Ad Copy</div>
+    </button>
+    <button class="mod-btn" onclick="selectModule('competitor', this)">
+      <div class="mod-num">03</div>
+      <div class="mod-label">Competitor</div>
+    </button>
+    <button class="mod-btn" onclick="selectModule('intelligence', this)">
+      <div class="mod-num">04</div>
+      <div class="mod-label">Intelligence</div>
+    </button>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <div class="corner"></div>
+        Input Parameters
+      </div>
+      <div class="module-badge" id="active-badge">SEO Brief Generator</div>
+    </div>
+    <div class="panel-body">
+
+      <div class="fields-standard active" id="fields-standard">
+        <div class="field-grid">
+          <div>
+            <div class="field-label">Topic</div>
+            <input id="topic" placeholder="e.g. skincare for acne prone skin" />
+          </div>
+          <div>
+            <div class="field-label">Audience</div>
+            <input id="audience" placeholder="e.g. Gen Z women in India" />
+          </div>
+          <div class="field-full">
+            <div class="field-label">Goal</div>
+            <input id="goal" placeholder="e.g. rank on Google, drive sales, outrank competitor X" />
+          </div>
+        </div>
+      </div>
+
+      <div class="fields-intelligence" id="fields-intelligence">
+        <div class="field-grid">
+          <div class="field-full">
+            <div class="field-label">Raw Campaign Data</div>
+            <textarea id="raw-data" placeholder="Paste any campaign data here — impressions, clicks, CTR, spend, conversions, keyword performance, device breakdown..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="execute-wrap">
+        <button class="execute-btn" id="run-btn" onclick="runARIA()">
+          <span class="btn-corners"></span>
+          ▶ &nbsp; Execute ARIA
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-panel" id="loading-panel">
+    <div class="loading-ring"></div>
+    <div class="loading-title">Processing</div>
+    <div class="loading-msg" id="loading-msg">Initializing Mistral...</div>
+    <div class="loading-progress"><div class="loading-fill"></div></div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-panel" id="error-panel"></div>
+
+  <!-- OUTPUT -->
+  <div class="output-panel" id="output-panel">
+    <div class="output-header">
+      <div class="output-title-wrap">
+        <div class="output-icon"><div class="output-icon-dot"></div></div>
+        <div class="output-label" id="output-label">ARIA Output</div>
+      </div>
+      <div class="output-actions">
+        <button class="out-btn" onclick="copyOutput()">Copy</button>
+        <button class="out-btn" onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+    <div class="output-body" id="output-body"></div>
+    <div class="output-footer">
+      <div class="footer-stat" id="output-meta">Generated locally · Mistral 7B</div>
+      <div class="footer-stat">ARIA · <span>No data leaves your device</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">
+    <div class="ticker-item">Engine <span>Llama 3.3 70B</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Mode <span>Groq Cloud · Fast</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Privacy <span>Groq Free Tier</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Modules <span>04 Active</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Built with <span>n8n + Ollama</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Cost <span>₹0.00</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Status <span>Online</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <!-- Duplicate for seamless loop -->
+    <div class="ticker-item">Engine <span>Llama 3.3 70B</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Mode <span>Groq Cloud · Fast</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Privacy <span>Groq Free Tier</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Modules <span>04 Active</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Built with <span>n8n + Ollama</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Cost <span>₹0.00</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+    <div class="ticker-item">Status <span>Online</span></div>
+    <div class="ticker-item ticker-sep">///</div>
+  </div>
+</div>
+
+<script>
+const WEBHOOKS = {
+  seo: 'http://localhost:5678/webhook/aria-seo',
+  ads: 'http://localhost:5678/webhook/aria-ads',
+  competitor: 'http://localhost:5678/webhook/aria-competitor',
+  intelligence: 'http://localhost:5678/webhook/aria-intelligence'
+};
+
+const MODULE_LABELS = {
+  seo: 'SEO Brief Generator',
+  ads: 'Ad Copy Generator',
+  competitor: 'Competitor Analyser',
+  intelligence: 'Campaign Intelligence'
+};
+
+const LOADING_MSGS = [
+  'Initializing Mistral...',
+  'Parsing input parameters...',
+  'Running local inference...',
+  'Generating intelligence...',
+  'Structuring output...',
+  'Almost complete...'
+];
+
+let currentModule = 'seo';
+let rawOutputText = '';
+
+function selectModule(mod, el) {
+  currentModule = mod;
+  document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('active-badge').textContent = MODULE_LABELS[mod];
+
+  if (mod === 'intelligence') {
+    document.getElementById('fields-standard').classList.remove('active');
+    document.getElementById('fields-intelligence').classList.add('active');
+  } else {
+    document.getElementById('fields-standard').classList.add('active');
+    document.getElementById('fields-intelligence').classList.remove('active');
+  }
+
+  clearAll();
+}
+
+function formatOutput(raw) {
+  let text = raw.replace(/\\n/g, '\n');
+  rawOutputText = text;
+
+  // Try to parse --- SECTION --- headers
+  const headerRx = /---\s*([^-\n]+?)\s*---/g;
+  const parts = text.split(/---[^-\n]+---/);
+  const headers = [];
+  let m;
+  while ((m = headerRx.exec(text)) !== null) headers.push(m[1].trim());
+
+  if (headers.length >= 2 && parts.length >= 3) {
+    let html = '';
+    for (let i = 0; i < headers.length; i++) {
+      const content = (parts[i + 1] || '').trim();
+      if (!content) continue;
+      const formatted = escHtml(content)
+        .replace(/\n/g, '<br>')
+        .replace(/(\d+\.\s)/g, '<strong>$1</strong>');
+      html += `<div class="out-section" style="animation-delay:${i * 0.08}s">
+        <div class="section-tag">${escHtml(headers[i])}</div>
+        <div class="section-content">${formatted}</div>
+      </div>`;
+    }
+    return html;
+  }
+
+  // Fallback: raw mono text
+  return `<div class="raw-out">${escHtml(text)}</div>`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function runARIA() {
+  const topic = (document.getElementById('topic')?.value || '').trim();
+  const audience = (document.getElementById('audience')?.value || '').trim();
+  const goal = (document.getElementById('goal')?.value || '').trim();
+  const rawData = (document.getElementById('raw-data')?.value || '').trim();
+
+  if (currentModule === 'intelligence' && !rawData) { showError('No data input detected. Paste campaign data to proceed.'); return; }
+  if (currentModule !== 'intelligence' && !topic) { showError('Topic parameter is required. Please enter a topic.'); return; }
+
+  setLoading(true);
+  hideError();
+  clearOutput();
+
+  let idx = 0;
+  const interval = setInterval(() => {
+    if (idx < LOADING_MSGS.length) document.getElementById('loading-msg').textContent = LOADING_MSGS[idx++];
+  }, 2200);
+
+  const start = Date.now();
+  const payload = currentModule === 'intelligence'
+    ? { input: rawData, module: currentModule }
+    : { input: `Topic: ${topic}\nAudience: ${audience}\nGoal: ${goal}`, topic, audience, goal, module: currentModule };
+
+  try {
+    const res = await fetch(WEBHOOKS[currentModule], {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    clearInterval(interval);
+    if (!res.ok) throw new Error('n8n returned HTTP ' + res.status);
+
+    const data = await res.json();
+    const output = data.output || data.text || data.response || data.message || JSON.stringify(data, null, 2);
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+    setLoading(false);
+    document.getElementById('output-body').innerHTML = formatOutput(output);
+    document.getElementById('output-label').textContent = MODULE_LABELS[currentModule].toUpperCase();
+    document.getElementById('output-meta').innerHTML = `Generated in <span>${elapsed}s</span> · Mistral 7B · Local`;
+    document.getElementById('output-panel').classList.add('show');
+    document.getElementById('output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    clearInterval(interval);
+    setLoading(false);
+    showError(
+      '[ CONNECTION ERROR ]\n\n' +
+      'ARIA could not reach n8n. Check:\n\n' +
+      '1. n8n is running → Terminal → n8n start\n' +
+      '2. Ollama is running → check menu bar llama icon\n' +
+      '3. Webhook workflow is set to Active in n8n\n\n' +
+      '> ' + err.message
+    );
+  }
+}
+
+function setLoading(show) {
+  document.getElementById('loading-panel').classList.toggle('show', show);
+  document.getElementById('run-btn').disabled = show;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-panel');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function hideError() { document.getElementById('error-panel').classList.remove('show'); }
+
+function clearOutput() {
+  document.getElementById('output-panel').classList.remove('show');
+  document.getElementById('output-body').innerHTML = '';
+}
+
+function clearAll() {
+  clearOutput();
+  hideError();
+  rawOutputText = '';
+}
+
+function copyOutput() {
+  if (!rawOutputText) return;
+  navigator.clipboard.writeText(rawOutputText).then(() => {
+    const btn = document.querySelector('.out-btn');
+    btn.textContent = 'Copied ✓';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+</script>
+</body>
+</html>
